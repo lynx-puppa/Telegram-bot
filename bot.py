@@ -13,44 +13,101 @@ ADMIN_ID = 8324256407
 BKASH_NUMBER = "01950602111" 
 NAGAD_NUMBER = "01950602111" 
 
-# --- Supabase ডেটাবেস লিংক (Pooler Port 6543) ---
-DATABASE_URL = DATABASE_URL = postgresql://postgres:Noor2009tk20@db.tiksnhmrqmoometscibr.supabase.co:5432/postgres
+# --- Supabase ডেটাবেস লিংক ---
+DATABASE_URL = "postgresql://postgres:Noor2009tk20@db.tiksnhmrqmoometscibr.supabase.co:5432/postgres"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# --- ডেটাবেস সেটআপ (Supabase) ---
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-conn.autocommit = True
-cursor = conn.cursor()
+# --- ডেটাবেস সেটআপ ---
+try:
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require', connect_timeout=15)
+    conn.autocommit = True
+    cursor = conn.cursor()
+    print("Database connected successfully!")
+except Exception as e:
+    print(f"Database connection error: {e}")
+    conn = None 
+    cursor = None
 
-cursor.execute('''CREATE TABLE IF NOT EXISTS users (user_id BIGINT PRIMARY KEY, username TEXT, referrer_id BIGINT, ref_count INTEGER DEFAULT 0, discount INTEGER DEFAULT 0)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS panels (id SERIAL PRIMARY KEY, name TEXT, device TEXT, duration TEXT, price TEXT, UNIQUE(name, device, duration, price))''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS stock (id SERIAL PRIMARY KEY, panel_name TEXT, duration TEXT, key_code TEXT, is_sold INTEGER DEFAULT 0, sold_at TEXT)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, user_id BIGINT, username TEXT, panel_name TEXT, duration TEXT, price TEXT, trx_id TEXT, status TEXT)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS promos (code TEXT PRIMARY KEY, discount INTEGER)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)''')
+def init_db():
+    if cursor:
+        cursor.execute('''CREATE TABLE IF NOT EXISTS users (user_id BIGINT PRIMARY KEY, username TEXT, referrer_id BIGINT, ref_count INTEGER DEFAULT 0, discount INTEGER DEFAULT 0)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS panels (id SERIAL PRIMARY KEY, name TEXT, device TEXT, duration TEXT, price TEXT, UNIQUE(name, device, duration, price))''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS stock (id SERIAL PRIMARY KEY, panel_name TEXT, duration TEXT, key_code TEXT, is_sold INTEGER DEFAULT 0, sold_at TEXT)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, user_id BIGINT, username TEXT, panel_name TEXT, duration TEXT, price TEXT, trx_id TEXT, status TEXT)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS promos (code TEXT PRIMARY KEY, discount INTEGER)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)''')
 
-cursor.execute("INSERT INTO settings (key, value) VALUES ('referral_active', '1') ON CONFLICT (key) DO NOTHING")
-cursor.execute("INSERT INTO settings (key, value) VALUES ('support_contact', '@YourTelegramUsername') ON CONFLICT (key) DO NOTHING")
-cursor.execute("INSERT INTO settings (key, value) VALUES ('bkash_number', %s) ON CONFLICT (key) DO NOTHING", (BKASH_NUMBER,))
-cursor.execute("INSERT INTO settings (key, value) VALUES ('nagad_number', %s) ON CONFLICT (key) DO NOTHING", (NAGAD_NUMBER,))
+        cursor.execute("INSERT INTO settings (key, value) VALUES ('referral_active', '1') ON CONFLICT (key) DO NOTHING")
+        cursor.execute("INSERT INTO settings (key, value) VALUES ('support_contact', '@YourTelegramUsername') ON CONFLICT (key) DO NOTHING")
+        cursor.execute("INSERT INTO settings (key, value) VALUES ('bkash_number', %s) ON CONFLICT (key) DO NOTHING", (BKASH_NUMBER,))
+        cursor.execute("INSERT INTO settings (key, value) VALUES ('nagad_number', %s) ON CONFLICT (key) DO NOTHING", (NAGAD_NUMBER,))
 
-initial_panels = [
-    ("AIM HACK", "ANDROID - IOS", "1 HOURS", "15 tk"), ("AIM HACK", "ANDROID - IOS", "3 HOURS", "40 tk"),
-    ("DRIP WIRE", "ANDROID EXTERNAL", "3 HOURS", "25 tk"), ("DRIP WIRE", "ANDROID EXTERNAL", "7 DAYS", "350 tk"),
-    ("ZYRO PANEL", "ANDROID IOS", "1 Hour", "20 tk"), ("ZYRO PANEL", "ANDROID IOS", "1 Day", "120 tk"),
-    ("REZZX PANEL", "ANDROID - IOS", "1 Hour", "15 tk"), ("MYTH PANEL", "ANDROID - IOS", "1 Hour", "17 tk"),
-    ("HG CHEATS", "NON ROOT", "1 Day", "60 tk"), ("SUPER PROXY iOS", "iOS", "1 Day", "70 tk"),
-    ("ANGRY MOD KERNEL", "KERNEL", "1 Day", "90 tk")
-]
-for p in initial_panels:
-    cursor.execute("INSERT INTO panels (name, device, duration, price) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", p)
+        initial_panels = [
+            # 1: AIM HACK
+            ("AIM HACK", "ANDROID - IOS", "1 HOURS", "15 tk"), ("AIM HACK", "ANDROID - IOS", "3 HOURS", "40 tk"),
+            ("AIM HACK", "ANDROID - IOS", "6 HOURS", "75 tk"), ("AIM HACK", "ANDROID - IOS", "12 HOURS", "125 tk"),
+            ("AIM HACK", "ANDROID - IOS", "1 DAYS", "165 tk"), ("AIM HACK", "ANDROID - IOS", "3 DAYS", "305 tk"),
+            ("AIM HACK", "ANDROID - IOS", "7 DAYS", "510 tk"), ("AIM HACK", "ANDROID - IOS", "15 DAYS", "810 tk"),
+            ("AIM HACK", "ANDROID - IOS", "30 DAYS", "1110 tk"),
+            
+            # 2: DRIP WIRE
+            ("DRIP WIRE", "ANDROID - IOS", "3 Hour", "25 tk"), ("DRIP WIRE", "ANDROID - IOS", "6 Hour", "35 tk"),
+            ("DRIP WIRE", "ANDROID - IOS", "12 Hour", "65 tk"), ("DRIP WIRE", "ANDROID - IOS", "1 Day", "95 tk"),
+            ("DRIP WIRE", "ANDROID - IOS", "7 Day", "340 tk"),
+            
+            # 3: ZYRO PANEL
+            ("ZYRO PANEL", "ANDROID IOS", "1 Hour", "20 tk"), ("ZYRO PANEL", "ANDROID IOS", "3 Hours", "35 tk"),
+            ("ZYRO PANEL", "ANDROID IOS", "6 Hours", "55 tk"), ("ZYRO PANEL", "ANDROID IOS", "12 Hour", "80 tk"),
+            ("ZYRO PANEL", "ANDROID IOS", "1 Day", "120 tk"),
+            
+            # 4: REZZX PANEL
+            ("REZZX PANEL", "ANDROID - IOS", "1 Hour", "15 tk"), ("REZZX PANEL", "ANDROID - IOS", "2 Hour", "25 tk"),
+            ("REZZX PANEL", "ANDROID - IOS", "3 Hour", "35 tk"), ("REZZX PANEL", "ANDROID - IOS", "6 Hour", "50 tk"),
+            ("REZZX PANEL", "ANDROID - IOS", "12 Hour", "75 tk"),
+
+            # 5: MYTH PANEL
+            ("MYTH PANEL", "ANDROID - IOS", "1 Hour", "17 tk"), ("MYTH PANEL", "ANDROID - IOS", "3 Hours", "35 tk"),
+            ("MYTH PANEL", "ANDROID - IOS", "12 Hours", "75 tk"), ("MYTH PANEL", "ANDROID - IOS", "1 Day", "95 tk"),
+            ("MYTH PANEL", "ANDROID - IOS", "3 Days", "120 tk"),
+
+            # 6: HG CHEATS
+            ("HG CHEATS", "NON ROOT", "1 Day", "60 tk"), ("HG CHEATS", "NON ROOT", "7 Days", "200 tk"),
+            ("HG CHEATS", "NON ROOT", "10 Days", "300 tk"), ("HG CHEATS", "NON ROOT", "30 Days", "460 tk"),
+
+            # 7: SUPER PROXY iOS
+            ("SUPER PROXY iOS", "iOS", "1 Day", "70 tk"), ("SUPER PROXY iOS", "iOS", "3 Days", "165 tk"),
+            ("SUPER PROXY iOS", "iOS", "7 Days", "280 tk"), ("SUPER PROXY iOS", "iOS", "15 Days", "390 tk"),
+            ("SUPER PROXY iOS", "iOS", "30 Days", "570 tk"),
+
+            # 8: ANGRY MOD KERNEL
+            ("ANGRY MOD KERNEL", "KERNEL", "1 Day", "90 tk"), ("ANGRY MOD KERNEL", "KERNEL", "7 Days", "345 tk"),
+            ("ANGRY MOD KERNEL", "KERNEL", "15 Days", "550 tk"), ("ANGRY MOD KERNEL", "KERNEL", "30 Days", "875 tk"),
+
+            # 9: BRMOD SILENT PC
+            ("BRMOD SILENT PC", "PC", "1 Day", "95 tk"), ("BRMOD SILENT PC", "PC", "10 Day", "380 tk"),
+            ("BRMOD SILENT PC", "PC", "30 Day", "780 tk"),
+
+            # 10: DRIP CLIENT APK MOD
+            ("DRIP CLIENT APK MOD", "ANDROID", "1 Day", "30 tk"), ("DRIP CLIENT APK MOD", "ANDROID", "3 Days", "95 tk"),
+            ("DRIP CLIENT APK MOD", "ANDROID", "7 Days", "145 tk"), ("DRIP CLIENT APK MOD", "ANDROID", "15 Days", "280 tk"),
+            ("DRIP CLIENT APK MOD", "ANDROID", "30 Days", "480 tk"),
+
+            # 11: FF GUILD GLORY
+            ("FF GUILD GLORY", "BOT SERVICE", "1 Squad – 4 BOT", "120 tk"),
+            ("FF GUILD GLORY", "BOT SERVICE", "5 Squad – 20 BOT", "550 tk")
+        ]
+        for p in initial_panels:
+            cursor.execute("INSERT INTO panels (name, device, duration, price) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", p)
+
+init_db()
 
 app = Flask(__name__)
 @app.route('/')
 def home(): return "Bot Running"
 
 def send_daily_report():
+    if not cursor: return
     today = datetime.now().strftime('%Y-%m-%d')
     cursor.execute("SELECT COUNT(*) FROM stock WHERE is_sold=1 AND sold_at LIKE %s", (f"{today}%",))
     sold_today = cursor.fetchone()[0]
@@ -76,6 +133,9 @@ def report_scheduler():
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    if not cursor:
+        bot.send_message(message.chat.id, "⚠️ ডেটাবেস কানেক্ট হচ্ছে না, অনুগ্রহ করে অপেক্ষা করুন।")
+        return
     if len(message.text.split()) > 1:
         try:
             referrer_id = int(message.text.split()[1])
@@ -250,11 +310,50 @@ def admin_menu(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(types.KeyboardButton("📦 Add Stock (Keys)"), types.KeyboardButton("📋 Pending Orders"))
     markup.add(types.KeyboardButton("📊 Statistics"), types.KeyboardButton("✏️ Edit Price"))
-    markup.add(types.KeyboardButton("📢 Broadcast"), types.KeyboardButton("🎟️ Manage Promo Codes"))
-    markup.add(types.KeyboardButton("⚙️ Settings"), types.KeyboardButton("🗑 Clear Pending"))
-    markup.add(types.KeyboardButton("🔙 Back"))
+    markup.add(types.KeyboardButton("➕ Add New Panel"), types.KeyboardButton("📢 Broadcast"))
+    markup.add(types.KeyboardButton("🎟️ Manage Promo Codes"), types.KeyboardButton("⚙️ Settings"))
+    markup.add(types.KeyboardButton("🗑 Clear Pending"), types.KeyboardButton("🔙 Back"))
     bot.send_message(message.chat.id, "অ্যাডমিন প্যানেলে স্বাগতম।", reply_markup=markup)
 
+# --- নতুন প্যানেল অ্যাড করার লজিক (তুমি যেটা চেয়েছ) ---
+@bot.message_handler(func=lambda m: m.text == "➕ Add New Panel" and m.from_user.id == ADMIN_ID)
+def add_new_panel_start(message):
+    msg = bot.send_message(message.chat.id, "নতুন প্যানেলের নাম দিন (যেমন: NEW HACK):")
+    bot.register_next_step_handler(msg, add_panel_name)
+
+def add_panel_name(message):
+    panel_name = message.text.strip()
+    msg = bot.send_message(message.chat.id, f"'{panel_name}' এর জন্য ডিভাইসের নাম দিন (যেমন: ANDROID, IOS, PC):")
+    bot.register_next_step_handler(msg, add_panel_device, panel_name)
+
+def add_panel_device(message, panel_name):
+    device = message.text.strip()
+    msg = bot.send_message(message.chat.id, "এবার প্যানেলের সব প্যাকেজের লিস্ট দিন (প্রতিটা নতুন লাইনে)।\n\nফরম্যাট: `সময় - দাম`\nযেমন:\n1 Hour - 20 tk\n1 Day - 100 tk")
+    bot.register_next_step_handler(msg, add_panel_list, panel_name, device)
+
+def add_panel_list(message, panel_name, device):
+    text_lines = message.text.strip().split('\n')
+    success_count = 0
+    
+    for line in text_lines:
+        if "-" in line:
+            try:
+                duration, price = line.split("-", 1)
+                duration = duration.strip()
+                price = price.strip()
+                
+                cursor.execute("INSERT INTO panels (name, device, duration, price) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", 
+                               (panel_name, device, duration, price))
+                success_count += 1
+            except:
+                pass
+                
+    if success_count > 0:
+        bot.send_message(message.chat.id, f"✅ সফলভাবে {success_count} টি প্যাকেজ '{panel_name}' এর অধীনে যোগ করা হয়েছে!")
+    else:
+        bot.send_message(message.chat.id, "❌ ভুল ফরম্যাট! কোনো প্যাকেজ যোগ করা যায়নি। দয়া করে `সময় - দাম` ফরম্যাটে দিন।")
+
+# --- বাকি অ্যাডমিন ফাংশন ---
 @bot.message_handler(func=lambda m: m.text == "🎟️ Manage Promo Codes" and m.from_user.id == ADMIN_ID)
 def manage_promos(message):
     cursor.execute("SELECT code, discount FROM promos")
