@@ -14,7 +14,7 @@ BKASH_NUMBER = "01950602111"
 NAGAD_NUMBER = "01950602111" 
 
 # --- Supabase ডেটাবেস লিংক (Pooler Port 6543) ---
-DATABASE_URL = DATABASE_URL = "postgresql://postgres:mitu%40100%4020@db.tiksnhmrqmoometscibr.supabase.co:5432/postgres"
+DATABASE_URL = DATABASE_URL = postgresql://postgres:Noor2009tk20@db.tiksnhmrqmoometscibr.supabase.co:5432/postgres
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
