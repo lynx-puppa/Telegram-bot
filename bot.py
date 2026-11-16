@@ -6,17 +6,28 @@ import threading
 import time
 from datetime import datetime, timedelta
 import psycopg2
+import google.generativeai as genai
 
-# --- তোমার তথ্য এখানে বসানো হয়েছে ---
+# --- তোমার তথ্য ---
 BOT_TOKEN = "9102581820:AAEkSJcXjx9b2_0Z4PyXHJ14_dbVUai1rTY" 
 ADMIN_ID = 8324256407  
 BKASH_NUMBER = "01950602111" 
 NAGAD_NUMBER = "01950602111" 
 
-# --- Supabase ডেটাবেস লিংক ---
+# --- তোমার Supabase ডেটাবেস লিংক ---
 DATABASE_URL = "postgresql://postgres:Noor2009tk20@db.tiksnhmrqmoometscibr.supabase.co:5432/postgres"
 
+# --- তোমার Gemini API Key ---
+GEMINI_API_KEY = "AQ.Ab8RN6IA9nJFtRDtZ8rbHZ6eNJbahARu2demDPHX_woQkqFLjw"
+
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# --- AI সেটআপ ---
+try:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except Exception as e:
+    print(f"AI Setup Error: {e}")
 
 # --- ডেটাবেস সেটআপ ---
 try:
@@ -44,56 +55,45 @@ def init_db():
         cursor.execute("INSERT INTO settings (key, value) VALUES ('nagad_number', %s) ON CONFLICT (key) DO NOTHING", (NAGAD_NUMBER,))
 
         initial_panels = [
-            # 1: AIM HACK
             ("AIM HACK", "ANDROID - IOS", "1 HOURS", "15 tk"), ("AIM HACK", "ANDROID - IOS", "3 HOURS", "40 tk"),
             ("AIM HACK", "ANDROID - IOS", "6 HOURS", "75 tk"), ("AIM HACK", "ANDROID - IOS", "12 HOURS", "125 tk"),
             ("AIM HACK", "ANDROID - IOS", "1 DAYS", "165 tk"), ("AIM HACK", "ANDROID - IOS", "3 DAYS", "305 tk"),
             ("AIM HACK", "ANDROID - IOS", "7 DAYS", "510 tk"), ("AIM HACK", "ANDROID - IOS", "15 DAYS", "810 tk"),
             ("AIM HACK", "ANDROID - IOS", "30 DAYS", "1110 tk"),
             
-            # 2: DRIP WIRE
             ("DRIP WIRE", "ANDROID - IOS", "3 Hour", "25 tk"), ("DRIP WIRE", "ANDROID - IOS", "6 Hour", "35 tk"),
             ("DRIP WIRE", "ANDROID - IOS", "12 Hour", "65 tk"), ("DRIP WIRE", "ANDROID - IOS", "1 Day", "95 tk"),
             ("DRIP WIRE", "ANDROID - IOS", "7 Day", "340 tk"),
             
-            # 3: ZYRO PANEL
             ("ZYRO PANEL", "ANDROID IOS", "1 Hour", "20 tk"), ("ZYRO PANEL", "ANDROID IOS", "3 Hours", "35 tk"),
             ("ZYRO PANEL", "ANDROID IOS", "6 Hours", "55 tk"), ("ZYRO PANEL", "ANDROID IOS", "12 Hour", "80 tk"),
             ("ZYRO PANEL", "ANDROID IOS", "1 Day", "120 tk"),
             
-            # 4: REZZX PANEL
             ("REZZX PANEL", "ANDROID - IOS", "1 Hour", "15 tk"), ("REZZX PANEL", "ANDROID - IOS", "2 Hour", "25 tk"),
             ("REZZX PANEL", "ANDROID - IOS", "3 Hour", "35 tk"), ("REZZX PANEL", "ANDROID - IOS", "6 Hour", "50 tk"),
             ("REZZX PANEL", "ANDROID - IOS", "12 Hour", "75 tk"),
 
-            # 5: MYTH PANEL
             ("MYTH PANEL", "ANDROID - IOS", "1 Hour", "17 tk"), ("MYTH PANEL", "ANDROID - IOS", "3 Hours", "35 tk"),
             ("MYTH PANEL", "ANDROID - IOS", "12 Hours", "75 tk"), ("MYTH PANEL", "ANDROID - IOS", "1 Day", "95 tk"),
             ("MYTH PANEL", "ANDROID - IOS", "3 Days", "120 tk"),
 
-            # 6: HG CHEATS
             ("HG CHEATS", "NON ROOT", "1 Day", "60 tk"), ("HG CHEATS", "NON ROOT", "7 Days", "200 tk"),
             ("HG CHEATS", "NON ROOT", "10 Days", "300 tk"), ("HG CHEATS", "NON ROOT", "30 Days", "460 tk"),
 
-            # 7: SUPER PROXY iOS
             ("SUPER PROXY iOS", "iOS", "1 Day", "70 tk"), ("SUPER PROXY iOS", "iOS", "3 Days", "165 tk"),
             ("SUPER PROXY iOS", "iOS", "7 Days", "280 tk"), ("SUPER PROXY iOS", "iOS", "15 Days", "390 tk"),
             ("SUPER PROXY iOS", "iOS", "30 Days", "570 tk"),
 
-            # 8: ANGRY MOD KERNEL
             ("ANGRY MOD KERNEL", "KERNEL", "1 Day", "90 tk"), ("ANGRY MOD KERNEL", "KERNEL", "7 Days", "345 tk"),
             ("ANGRY MOD KERNEL", "KERNEL", "15 Days", "550 tk"), ("ANGRY MOD KERNEL", "KERNEL", "30 Days", "875 tk"),
 
-            # 9: BRMOD SILENT PC
             ("BRMOD SILENT PC", "PC", "1 Day", "95 tk"), ("BRMOD SILENT PC", "PC", "10 Day", "380 tk"),
             ("BRMOD SILENT PC", "PC", "30 Day", "780 tk"),
 
-            # 10: DRIP CLIENT APK MOD
             ("DRIP CLIENT APK MOD", "ANDROID", "1 Day", "30 tk"), ("DRIP CLIENT APK MOD", "ANDROID", "3 Days", "95 tk"),
             ("DRIP CLIENT APK MOD", "ANDROID", "7 Days", "145 tk"), ("DRIP CLIENT APK MOD", "ANDROID", "15 Days", "280 tk"),
             ("DRIP CLIENT APK MOD", "ANDROID", "30 Days", "480 tk"),
 
-            # 11: FF GUILD GLORY
             ("FF GUILD GLORY", "BOT SERVICE", "1 Squad – 4 BOT", "120 tk"),
             ("FF GUILD GLORY", "BOT SERVICE", "5 Squad – 20 BOT", "550 tk")
         ]
@@ -310,50 +310,82 @@ def admin_menu(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(types.KeyboardButton("📦 Add Stock (Keys)"), types.KeyboardButton("📋 Pending Orders"))
     markup.add(types.KeyboardButton("📊 Statistics"), types.KeyboardButton("✏️ Edit Price"))
-    markup.add(types.KeyboardButton("➕ Add New Panel"), types.KeyboardButton("📢 Broadcast"))
-    markup.add(types.KeyboardButton("🎟️ Manage Promo Codes"), types.KeyboardButton("⚙️ Settings"))
-    markup.add(types.KeyboardButton("🗑 Clear Pending"), types.KeyboardButton("🔙 Back"))
+    markup.add(types.KeyboardButton("➕ Add New Panel"), types.KeyboardButton("🤖 AI Command"))
+    markup.add(types.KeyboardButton("📢 Broadcast"), types.KeyboardButton("🎟️ Manage Promo Codes"))
+    markup.add(types.KeyboardButton("⚙️ Settings"), types.KeyboardButton("🗑 Clear Pending"))
+    markup.add(types.KeyboardButton("🔙 Back"))
     bot.send_message(message.chat.id, "অ্যাডমিন প্যানেলে স্বাগতম।", reply_markup=markup)
 
-# --- নতুন প্যানেল অ্যাড করার লজিক (তুমি যেটা চেয়েছ) ---
+# --- AI দিয়ে যেকোনো কিছু অ্যাড করার সিস্টেম ---
+@bot.message_handler(func=lambda m: m.text == "🤖 AI Command" and m.from_user.id == ADMIN_ID)
+def ai_command_start(message):
+    msg = bot.send_message(message.chat.id, "🤖 আপনি যা অ্যাড করতে চান, সাধারণ ভাষায় লিখুন।\n\nউদাহরণ: `নতুন প্যানেল DRIP WIRE অ্যাড করো, ডিভাইস অ্যান্ড্রয়েড, ১ দিন ১০০ টাকা, ৭ দিন ৩০০ টাকা`")
+    bot.register_next_step_handler(msg, process_ai_command)
+
+def process_ai_command(message):
+    user_text = message.text
+    prompt = f"""You are an assistant for a Telegram bot. Extract the panel name, device, and multiple packages (duration and price) from the text below.
+    Output ONLY in this exact format:
+    PanelName|Device|Duration1,Price1|Duration2,Price2
+    
+    Example Input: "Add new panel DRIP WIRE for Android, 1 Day 100 tk, 7 Days 300 tk"
+    Example Output: DRIP WIRE|Android|1 Day,100 tk|7 Days,300 tk
+    
+    Input: "{user_text}"
+    Output:"""
+    
+    try:
+        response = model.generate_content(prompt)
+        result = response.text.strip()
+        
+        parts = result.split("|")
+        if len(parts) >= 3:
+            panel_name = parts[0].strip()
+            device = parts[1].strip()
+            packages = parts[2:] 
+            
+            for pkg in packages:
+                if "," in pkg:
+                    duration, price = pkg.split(",")
+                    duration = duration.strip()
+                    price = price.strip()
+                    cursor.execute("INSERT INTO panels (name, device, duration, price) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", 
+                                   (panel_name, device, duration, price))
+            bot.send_message(message.chat.id, f"✅ AI সফলভাবে '{panel_name}' প্যানেলটি এবং এর প্যাকেজগুলো অ্যাড করেছে!")
+        else:
+            bot.send_message(message.chat.id, f"❌ AI ডাটা বুঝতে পারেনি। আউটপুট: {result}")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"❌ AI এরর: {str(e)}")
+
+# --- ম্যানুয়াল প্যানেল অ্যাড ---
 @bot.message_handler(func=lambda m: m.text == "➕ Add New Panel" and m.from_user.id == ADMIN_ID)
 def add_new_panel_start(message):
-    msg = bot.send_message(message.chat.id, "নতুন প্যানেলের নাম দিন (যেমন: NEW HACK):")
+    msg = bot.send_message(message.chat.id, "প্যানেলের নাম দিন:")
     bot.register_next_step_handler(msg, add_panel_name)
 
 def add_panel_name(message):
     panel_name = message.text.strip()
-    msg = bot.send_message(message.chat.id, f"'{panel_name}' এর জন্য ডিভাইসের নাম দিন (যেমন: ANDROID, IOS, PC):")
+    msg = bot.send_message(message.chat.id, f"'{panel_name}' এর ডিভাইস দিন (যেমন: ANDROID):")
     bot.register_next_step_handler(msg, add_panel_device, panel_name)
 
 def add_panel_device(message, panel_name):
     device = message.text.strip()
-    msg = bot.send_message(message.chat.id, "এবার প্যানেলের সব প্যাকেজের লিস্ট দিন (প্রতিটা নতুন লাইনে)।\n\nফরম্যাট: `সময় - দাম`\nযেমন:\n1 Hour - 20 tk\n1 Day - 100 tk")
+    msg = bot.send_message(message.chat.id, "প্যাকেজের লিস্ট দিন (প্রতিটা লাইনে: `1 Day - 100 tk` ফরম্যাটে):")
     bot.register_next_step_handler(msg, add_panel_list, panel_name, device)
 
 def add_panel_list(message, panel_name, device):
     text_lines = message.text.strip().split('\n')
     success_count = 0
-    
     for line in text_lines:
         if "-" in line:
             try:
                 duration, price = line.split("-", 1)
-                duration = duration.strip()
-                price = price.strip()
-                
                 cursor.execute("INSERT INTO panels (name, device, duration, price) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", 
-                               (panel_name, device, duration, price))
+                               (panel_name, device, duration.strip(), price.strip()))
                 success_count += 1
-            except:
-                pass
-                
-    if success_count > 0:
-        bot.send_message(message.chat.id, f"✅ সফলভাবে {success_count} টি প্যাকেজ '{panel_name}' এর অধীনে যোগ করা হয়েছে!")
-    else:
-        bot.send_message(message.chat.id, "❌ ভুল ফরম্যাট! কোনো প্যাকেজ যোগ করা যায়নি। দয়া করে `সময় - দাম` ফরম্যাটে দিন।")
+            except: pass
+    bot.send_message(message.chat.id, f"✅ সফলভাবে {success_count} টি প্যাকেজ যোগ করা হয়েছে!")
 
-# --- বাকি অ্যাডমিন ফাংশন ---
 @bot.message_handler(func=lambda m: m.text == "🎟️ Manage Promo Codes" and m.from_user.id == ADMIN_ID)
 def manage_promos(message):
     cursor.execute("SELECT code, discount FROM promos")
