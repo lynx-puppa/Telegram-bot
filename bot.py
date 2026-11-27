@@ -14,8 +14,8 @@ ADMIN_ID = 8324256407
 BKASH_NUMBER = "01950602111" 
 NAGAD_NUMBER = "01950602111" 
 
-# --- তোমার Supabase ডেটাবেস লিংক ---
-DATABASE_URL = "postgresql://postgres:Noor2009tk20@db.tiksnhmrqmoometscibr.supabase.co:5432/postgres"
+# --- নতুন Supabase ডেটাবেস লিংক ---
+DATABASE_URL = "postgresql://postgres:human123notsave@db.tiksnhmrqmoometscibr.supabase.co:5432/postgres"
 
 # --- তোমার Gemini API Key ---
 GEMINI_API_KEY = "AQ.Ab8RN6IA9nJFtRDtZ8rbHZ6eNJbahARu2demDPHX_woQkqFLjw"
